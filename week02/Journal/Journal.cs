@@ -1,4 +1,4 @@
-using System;
+ using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -16,6 +16,19 @@ public class Journal
         foreach (Entry entry in _entries)
         {
             entry.Display();
+        }
+    }
+
+    public void SearchEntries(string keyword)
+    {
+        Console.WriteLine("\n--- Search Results ---");
+
+        foreach (Entry entry in _entries)
+        {
+            if (entry._entryText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            {
+                entry.Display();
+            }
         }
     }
 

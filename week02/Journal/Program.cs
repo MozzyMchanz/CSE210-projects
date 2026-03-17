@@ -4,19 +4,25 @@ class Program
 {
     static void Main(string[] args)
     {
+        // EXCEEDING REQUIREMENTS:
+        // 1. Added mood tracking for each entry.
+        // 2. Implemented word count feedback.
+        // 3. Added search functionality to find entries by keyword.
+
         Journal journal = new Journal();
         PromptGenerator promptGenerator = new PromptGenerator();
 
         int choice = 0;
 
-        while (choice != 5)
+        while (choice != 6)
         {
             Console.WriteLine("\nJournal Menu:");
             Console.WriteLine("1. Write New Entry");
             Console.WriteLine("2. Display Journal");
             Console.WriteLine("3. Save Journal");
             Console.WriteLine("4. Load Journal");
-            Console.WriteLine("5. Exit");
+            Console.WriteLine("5. Search Entries"); // NEW
+            Console.WriteLine("6. Exit");
 
             Console.Write("Choose an option: ");
             choice = int.Parse(Console.ReadLine());
@@ -29,10 +35,19 @@ class Program
                 Console.Write("Your response: ");
                 string response = Console.ReadLine();
 
+                // WORD COUNT FEATURE
+                int wordCount = response.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+                Console.WriteLine($"You wrote {wordCount} words.");
+
+                // MOOD FEATURE
+                Console.Write("How do you feel today? ");
+                string mood = Console.ReadLine();
+
                 Entry entry = new Entry();
                 entry._date = DateTime.Now.ToShortDateString();
                 entry._promptText = prompt;
                 entry._entryText = response;
+                entry._mood = mood;
 
                 journal.AddEntry(entry);
             }
@@ -55,6 +70,13 @@ class Program
 
                 journal.LoadFromFile(filename);
                 Console.WriteLine("Journal loaded successfully!");
+            }
+            else if (choice == 5)
+            {
+                Console.Write("Enter keyword to search: ");
+                string keyword = Console.ReadLine();
+
+                journal.SearchEntries(keyword);
             }
         }
     }
