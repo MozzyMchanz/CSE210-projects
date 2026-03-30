@@ -4,9 +4,7 @@ using System.Threading;
 
 /*
 Mindfulness App - CSE210 Project (Single File Version)
-All logic (classes, animations, menu) consolidated into Program.cs per request.
-Implements full spec: Breathing/Reflection/Listing with menu, start/end messages, animations, timing.
-Exceeds reqs: DateTime timing, input handling, varied animations.
+ Exceeding expectations: DateTime timing, input handling, varied animations.
 */
 
 public enum AnimationType { Spinner, Countdown, Dots }
