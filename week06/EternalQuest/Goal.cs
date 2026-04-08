@@ -18,25 +18,28 @@ public abstract class Goal
 
 public class SimpleGoal : Goal
 {
-    public bool IsCompleted { get; set; } = false;
+    private bool _isCompleteState = false;
 
-    public SimpleGoal(string description, int points) : base(description, points) { }
+    public SimpleGoal(string description, int points, bool isCompleteState = false) : base(description, points)
+    {
+        _isCompleteState = isCompleteState;
+    }
 
     public override string GetDisplayString()
     {
-        return IsCompleted ? $"[X] {Description}" : $"[ ] {Description} (worth {Points} points)";
+        return _isCompleteState ? $"[X] {Description}" : $"[ ] {Description} (worth {Points} points)";
     }
 
     public override bool IsCompleted()
     {
-        return IsCompleted;
+        return _isCompleteState;
     }
 
     public override int RecordEvent()
     {
-        if (!IsCompleted)
+        if (!_isCompleteState)
         {
-            IsCompleted = true;
+            _isCompleteState = true;
             return Points;
         }
         return 0;
@@ -65,35 +68,41 @@ public class EternalGoal : Goal
 
 public class ChecklistGoal : Goal
 {
-    public int TargetCount { get; set; }
-    public int CompletedCount { get; set; }
-    public int BonusPoints { get; set; }
-    public bool PaidBonus { get; set; } = false;
+    private int _targetCount;
+    private int _completedCount;
+    private int _bonusPoints;
+    private bool _paidBonus;
 
-    public ChecklistGoal(string description, int points, int target, int bonus) : base(description, points)
+    public int TargetCount => _targetCount;
+    public int CompletedCount => _completedCount;
+    public int BonusPoints => _bonusPoints;
+
+    public ChecklistGoal(string description, int points, int target = 0, int bonus = 0, int completed = 0, bool paidBonus = false) : base(description, points)
     {
-        TargetCount = target;
-        BonusPoints = bonus;
+        _targetCount = target;
+        _bonusPoints = bonus;
+        _completedCount = completed;
+        _paidBonus = completed >= target || paidBonus;
     }
 
     public override string GetDisplayString()
     {
-        return $"[ ] {Description} ({CompletedCount}/{TargetCount} | worth {Points} points + {BonusPoints} bonus)";
+        return $"[ ] {Description} ({_completedCount}/{_targetCount} | worth {Points} points + {_bonusPoints} bonus)";
     }
 
     public override bool IsCompleted()
     {
-        return CompletedCount >= TargetCount;
+        return _completedCount >= _targetCount;
     }
 
     public override int RecordEvent()
     {
-        CompletedCount++;
+        _completedCount++;
         int earned = Points;
-        if (CompletedCount == TargetCount && !PaidBonus)
+        if (_completedCount == _targetCount && !_paidBonus)
         {
-            earned += BonusPoints;
-            PaidBonus = true;
+            earned += _bonusPoints;
+            _paidBonus = true;
         }
         return earned;
     }

@@ -1,0 +1,24 @@
+{
+  "Score": 0,
+  "Goals": [
+    {
+      "Type": "Simple",
+      "Description": "Sample: Learn polymorphism",
+      "Points": 1000,
+      "IsCompleteState": false
+    },
+    {
+      "Type": "Eternal",
+      "Description": "Sample: Daily coding practice",
+      "Points": 100
+    },
+    {
+      "Type": "Checklist",
+      "Description": "Sample: Complete 5 exercises",
+      "Points": 200,
+      "TargetCount": 5,
+      "CompletedCount": 2,
+      "BonusPoints": 500
+    }
+  ]
+}

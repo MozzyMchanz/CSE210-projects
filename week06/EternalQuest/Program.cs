@@ -4,6 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
+/* Creativity and exceeding requirements:
+- Level system: Displays current level based on score / 1000 + 1
+- Colored achievement messages for motivation
+- Robust JSON save/load preserving full state (progress, score)
+- Polymorphic handling of all goal types in single List<Goal>
+These gamification elements encourage continued use beyond basic spec. */
+
 class Program
 {
     private static List<Goal> _goals = new();
@@ -81,7 +88,9 @@ class Program
         Console.Write("Select goal type (1-3): ");
         string typeChoice = Console.ReadLine()?.Trim();
 
-        Goal? goal = null;
+Goal goal = null!;
+
+
         switch (typeChoice)
         {
             case "1":
@@ -149,17 +158,28 @@ class Program
     {
         try
         {
+            var goalsData = new List<object>();
+            foreach (var g in _goals)
+            {
+                if (g is SimpleGoal sg)
+                {
+                    goalsData.Add(new { Type = "Simple", Description = sg.Description, Points = sg.Points, IsCompleteState = sg.IsCompleted() });
+                }
+                else if (g is EternalGoal eg)
+                {
+                    goalsData.Add(new { Type = "Eternal", Description = eg.Description, Points = eg.Points });
+                }
+                else if (g is ChecklistGoal cg)
+                {
+                    goalsData.Add(new { Type = "Checklist", Description = cg.Description, Points = cg.Points, TargetCount = cg.TargetCount, CompletedCount = cg.CompletedCount, BonusPoints = cg.BonusPoints });
+                }
+            }
             var data = new
             {
                 Score = _score,
-                Goals = _goals.Select(g => g switch
-                {
-                    SimpleGoal sg => new { Type = "Simple", sg.Description, sg.Points, IsCompleted = sg.IsCompleted() },
-                    EternalGoal eg => new { Type = "Eternal", eg.Description, eg.Points },
-                    ChecklistGoal cg => new { Type = "Checklist", cg.Description, cg.Points, cg.TargetCount, cg.CompletedCount, cg.BonusPoints },
-                    _ => null
-                }).Where(d => d != null).ToList<object>()
+                Goals = goalsData
             };
+
 
             string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_saveFile, json);
@@ -184,37 +204,39 @@ class Program
         try
         {
             string json = File.ReadAllText(_saveFile);
-            var data = JsonSerializer.Deserialize<Dictionary<string, object>>(json)!;
-
-            _score = (int)(double)data["Score"];
+            using JsonDocument doc = JsonDocument.Parse(json);
+            JsonElement root = doc.RootElement;
+            _score = root.GetProperty("Score").GetInt32();
 
             _goals.Clear();
-            var goalsData = ((JsonElement)data["Goals"]).EnumerateArray().ToList();
-
-            foreach (var goalData in goalsData)
+            JsonElement goalsArray = root.GetProperty("Goals");
+            foreach (JsonElement goalEl in goalsArray.EnumerateArray())
             {
-                var dict = goalData.EnumerateObject().ToDictionary(p => p.Name, p => (object)p.Value);
-                string type = (string)dict["Type"];
+                string type = goalEl.GetProperty("Type").GetString()!;
+                string desc = goalEl.GetProperty("Description").GetString()!;
+                int points = goalEl.GetProperty("Points").GetInt32();
 
-                Goal? goal = type switch
+                Goal goal;
+                switch (type)
                 {
-                    "Simple" => new SimpleGoal((string)dict["Description"], (int)(double)dict["Points"])
-                    {
-                        _isCompleted = (bool)dict["IsCompleted"] // Note: need public setter or reflection, wait adjust class?
-                    },
-                    "Eternal" => new EternalGoal((string)dict["Description"], (int)(double)dict["Points"]),
-                    "Checklist" => new ChecklistGoal((string)dict["Description"], (int)(double)dict["Points"],
-                        (int)(double)dict["TargetCount"], (int)(double)dict["BonusPoints"])
-                    {
-                        CompletedCount = (int)(double)dict["CompletedCount"] // adjust
-                    },
-                    _ => null
-                };
+                case "Simple":
+                    bool completeState = goalEl.GetProperty("IsCompleteState").GetBoolean();
+                    goal = new SimpleGoal(desc, points, completeState);
+                    break;
+                case "Eternal":
+                    goal = new EternalGoal(desc, points);
+                    break;
+                case "Checklist":
+                    int target = goalEl.GetProperty("TargetCount").GetInt32();
+                    int bonus = goalEl.GetProperty("BonusPoints").GetInt32();
+                    int completed = goalEl.GetProperty("CompletedCount").GetInt32();
+                    goal = new ChecklistGoal(desc, points, target, bonus, completed);
+                    break;
 
-                if (goal != null)
-                {
-                    _goals.Add(goal);
+                    default:
+                        continue;
                 }
+                _goals.Add(goal);
             }
 
             Console.WriteLine("Goals loaded successfully!");
@@ -223,6 +245,7 @@ class Program
         {
             Console.WriteLine($"Error loading: {ex.Message}");
         }
+
         Console.ReadKey();
     }
 }
