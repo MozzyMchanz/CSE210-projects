@@ -19,6 +19,12 @@
       "TargetCount": 5,
       "CompletedCount": 2,
       "BonusPoints": 500
+    },
+    {
+      "Type": "Simple",
+      "Description": "5 knockouts",
+      "Points": 50,
+      "IsCompleteState": false
     }
   ]
 }
